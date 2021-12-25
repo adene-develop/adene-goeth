@@ -473,5 +473,5 @@ type ERC721Events interface {
 }
 
 func ParseERC721Events(filterChanges []*eth.FilterChange, events ERC721Events) error {
-
+	return nil
 }

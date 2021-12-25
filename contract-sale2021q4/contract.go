@@ -27,7 +27,7 @@ const (
 	BoxLevelLegendary
 )
 
-type Contract interface {
+type SALE2021Q4 interface {
 	contract.Contract
 	contract.Pauseable
 	contract.Ownable
@@ -43,7 +43,7 @@ type Contract interface {
 	BoxLevelOf(ctx context.Context, tokenID int64) (level BoxLevel, err error)
 }
 
-func NewSale2021Q4Contract(client *eth.Client, address common.Address, abi abi.ABI) Contract {
+func NewSale2021Q4Contract(client *eth.Client, address common.Address, abi abi.ABI) SALE2021Q4 {
 	return &sale2021q4{
 		address: address,
 		client:  client,

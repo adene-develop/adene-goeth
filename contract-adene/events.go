@@ -1,4 +1,4 @@
-package icon721
+package adene
 
 import (
 	"github.com/adene-develop/adene-goeth/contract"
@@ -6,8 +6,12 @@ import (
 )
 
 type Events interface {
-	contract.ERC721Events
+	contract.ERC20Events
 	contract.OwnableEvents
+
+	MinTokensBeforeSwapUpdated(minTokensBeforeSwap int64)
+	SwapAndLiquifyEnabledUpdated(enabled bool)
+	SwapAndLiquify(tokensSwapped, ethReceived, tokensIntoLiquidity int64)
 }
 
 func ParseEvents(filterChanges []*eth.FilterChange, events Events) error {

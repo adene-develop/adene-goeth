@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const SALE2021Q4ABIJSON = `[
+const ABIJson = `[
     {
       "anonymous": false,
       "inputs": [
@@ -433,11 +433,11 @@ const SALE2021Q4ABIJSON = `[
     }
   ]`
 
-var SALE2021Q4ABI abi.ABI
+var ABI abi.ABI
 
 func init() {
 	var err error
-	SALE2021Q4ABI, err = abi.JSON(strings.NewReader(SALE2021Q4ABIJSON))
+	ABI, err = abi.JSON(strings.NewReader(ABIJson))
 	if err != nil {
 		panic(err)
 	}

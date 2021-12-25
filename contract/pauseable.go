@@ -19,6 +19,23 @@ type PauseableEvents interface {
 	Unpaused(account common.Address)
 }
 
-func ParsePauseableEvents(filterChanges []*eth.FilterChange, events PauseableEvents) {
+func NewPauseable(client *eth.Client, address common.Address) Pauseable {
+	return &PauseableContract{
+		client:  client,
+		address: address,
+	}
+}
 
+type PauseableContract struct {
+	client  *eth.Client
+	address common.Address
+}
+
+func (p *PauseableContract) Paused(ctx context.Context) (bool, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func ParsePauseableEvents(filterChanges []*eth.FilterChange, events PauseableEvents) error {
+	return nil
 }
