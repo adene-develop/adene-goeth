@@ -351,45 +351,50 @@ type ERC20Contract struct {
 }
 
 func (e *ERC20Contract) Name(ctx context.Context) (string, error) {
-	res, err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, "name")
-	if err != nil {
+	var result struct {
+		Name string
+	}
+
+	if err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, &result, "name"); err != nil {
 		return "", errors.Wrap(err, "ERC20Contract call view `name` error")
 	}
 
-	return fmt.Sprintf("%s", res), nil
+	return result.Name, nil
 }
 
 func (e *ERC20Contract) Symbol(ctx context.Context) (string, error) {
-	res, err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, "symbol")
-	if err != nil {
+	var result struct {
+		Symbol string
+	}
+
+	if err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, &result, "symbol"); err != nil {
 		return "", errors.Wrap(err, "ERC20Contract call view `symbol` error")
 	}
 
-	return fmt.Sprintf("%s", res), nil
+	return result.Symbol, nil
 }
 
 func (e *ERC20Contract) Decimals(ctx context.Context) (uint8, error) {
-	res, err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, "decimals")
-	if err != nil {
+	var result struct {
+		Decimals uint8
+	}
+
+	if err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, &result, "decimals"); err != nil {
 		return 0, errors.Wrap(err, "ERC20Contract call view `decimals` error")
 	}
-	i, ok := new(big.Int).SetString(fmt.Sprintf("%x", res), 16)
-	if !ok {
-		return 0, errors.New("ERC20Contract Decimals parse result error")
-	}
-	return uint8(i.Uint64()), nil
+	return result.Decimals, nil
 }
 
 func (e *ERC20Contract) TotalSupply(ctx context.Context) (float64, error) {
-	res, err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, "totalSupply")
-	if err != nil {
+	var result struct {
+		TotalSupply *big.Int
+	}
+
+	if err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, &result, "totalSupply"); err != nil {
 		return 0, errors.Wrap(err, "ERC20Contract call view `totalSupply` error")
 	}
-	i, ok := new(big.Int).SetString(fmt.Sprintf("%x", res), 16)
-	if !ok {
-		return 0, errors.New("ERC20Contract TotalSupply parse result error")
-	}
-	f, err := e.realNumberOfTokens(ctx, i)
+
+	f, err := e.realNumberOfTokens(ctx, result.TotalSupply)
 	if err != nil {
 		return 0, errors.Wrap(err, "ERC20Contract TotalSupply get real total supply error")
 	}
@@ -397,15 +402,13 @@ func (e *ERC20Contract) TotalSupply(ctx context.Context) (float64, error) {
 }
 
 func (e *ERC20Contract) BalanceOf(ctx context.Context, account common.Address) (float64, error) {
-	res, err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, "balanceOf", account)
-	if err != nil {
+	var result struct {
+		Balance *big.Int
+	}
+	if err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, &result, "balanceOf", account); err != nil {
 		return 0, errors.Wrap(err, "ERC20Contract call view `balanceOf` error")
 	}
-	i, ok := new(big.Int).SetString(fmt.Sprintf("%x", res), 16)
-	if !ok {
-		return 0, errors.New("ERC20Contract BalanceOf parse result error")
-	}
-	f, err := e.realNumberOfTokens(ctx, i)
+	f, err := e.realNumberOfTokens(ctx, result.Balance)
 	if err != nil {
 		return 0, errors.Wrap(err, "ERC20Contract BalanceOf get real total supply error")
 	}
@@ -413,15 +416,13 @@ func (e *ERC20Contract) BalanceOf(ctx context.Context, account common.Address) (
 }
 
 func (e *ERC20Contract) Allowance(ctx context.Context, owner, spender common.Address) (float64, error) {
-	res, err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, "allowance", owner, spender)
-	if err != nil {
+	var result struct {
+		Allowance *big.Int
+	}
+	if err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, &result, "allowance", owner, spender); err != nil {
 		return 0, errors.Wrap(err, "ERC20Contract call view `allowance` error")
 	}
-	i, ok := new(big.Int).SetString(fmt.Sprintf("%x", res), 16)
-	if !ok {
-		return 0, errors.New("ERC20Contract Allowance parse result error")
-	}
-	f, err := e.realNumberOfTokens(ctx, i)
+	f, err := e.realNumberOfTokens(ctx, result.Allowance)
 	if err != nil {
 		return 0, errors.Wrap(err, "ERC20Contract Allowance get real total supply error")
 	}

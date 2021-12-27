@@ -2,7 +2,6 @@ package contract
 
 import (
 	"context"
-	"fmt"
 	"github.com/adene-develop/adene-goeth/eth"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -416,49 +415,75 @@ func (e *ERC721Contract) Client() *eth.Client {
 }
 
 func (e *ERC721Contract) Name(ctx context.Context) (string, error) {
-	//TODO implement me
-	panic("implement me")
+	var result struct {
+		Name string
+	}
+	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "name"); err != nil {
+		return "", errors.Wrap(err, "ERC721Contract call view `name` error")
+	}
+	return result.Name, nil
 }
 
 func (e *ERC721Contract) Symbol(ctx context.Context) (string, error) {
-	//TODO implement me
-	panic("implement me")
+	var result struct {
+		Symbol string
+	}
+	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "symbol"); err != nil {
+		return "", errors.Wrap(err, "ERC721Contract call view `symbol` error")
+	}
+
+	return result.Symbol, nil
 }
 
 func (e *ERC721Contract) TokenURI(ctx context.Context, tokenID string) (string, error) {
-	//TODO implement me
-	panic("implement me")
+	var result struct {
+		TokenURI string
+	}
+	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "symbol"); err != nil {
+		return "", errors.Wrap(err, "ERC721Contract call view `symbol` error")
+	}
+	return result.TokenURI, nil
 }
 
-func (e *ERC721Contract) BalanceOf(ctx context.Context, owner common.Address) (balance int64, err error) {
-	res, err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, "balanceOf", owner)
-	if err != nil {
+func (e *ERC721Contract) BalanceOf(ctx context.Context, owner common.Address) (int64, error) {
+	var result struct {
+		Balance *big.Int
+	}
+	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "balanceOf", owner); err != nil {
 		return 0, errors.Wrap(err, "ERC721Contract BalanceOf call view error")
 	}
 
-	i, ok := new(big.Int).SetString(fmt.Sprintf("%x", res), 16)
-	if !ok {
-		return 0, errors.New("ERC721Contract BalanceOf parse result error")
-	}
-	return i.Int64(), nil
+	return result.Balance.Int64(), nil
 }
 
-func (e *ERC721Contract) OwnerOf(ctx context.Context, tokenID int64) (owner common.Address, err error) {
-	res, err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, "ownerOf", big.NewInt(tokenID))
-	if err != nil {
+func (e *ERC721Contract) OwnerOf(ctx context.Context, tokenID int64) (common.Address, error) {
+	var result struct {
+		Owner common.Address
+	}
+	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "ownerOf", big.NewInt(tokenID)); err != nil {
 		return common.Address{}, errors.Wrap(err, "ERC721Contract OwnerOf call view error")
 	}
-	return common.BytesToAddress(res), nil
+	return result.Owner, nil
 }
 
-func (e *ERC721Contract) GetApproved(ctx context.Context, tokenID int64) (operator common.Address, err error) {
-	//TODO implement me
-	panic("implement me")
+func (e *ERC721Contract) GetApproved(ctx context.Context, tokenID int64) (common.Address, error) {
+	var result struct {
+		Operator common.Address
+	}
+	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "getApproved", big.NewInt(tokenID)); err != nil {
+		return common.Address{}, errors.Wrap(err, "ERC721Contract GetApproved call view error")
+	}
+	return result.Operator, nil
 }
 
 func (e *ERC721Contract) IsApprovedForAll(ctx context.Context, owner common.Address, operator common.Address) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+	var result struct {
+		IsApprovedForAll bool
+	}
+	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "isApprovedForAll", owner, operator); err != nil {
+		return false, errors.Wrap(err, "ERC721Contract IsApprovedForAll call view error")
+	}
+	return result.IsApprovedForAll, nil
 }
 
 type ERC721Events interface {

@@ -48,10 +48,12 @@ func (c *Client) RpcClient() *rpc.Client {
 
 // CallContractViewFunction gọi hàm view với tên hàm là `function` của contract với abi  là `abi`
 // `args` là params truyền vào hàm abi.Value
-func (c *Client) CallContractViewFunction(ctx context.Context, abi abi.ABI, contractAddress common.Address, function string, args ...interface{}) (result []byte, err error) {
+// giá trị trả về sẽ được unpack vào `result`
+// `result` phải là pointer
+func (c *Client) CallContractViewFunction(ctx context.Context, abi abi.ABI, contractAddress common.Address, result interface{}, function string, args ...interface{}) error {
 	data, err := abi.Pack(function, args...)
 	if err != nil {
-		return nil, errors.Wrap(err, "client abi pack error")
+		return errors.Wrap(err, "client abi pack error")
 	}
 
 	callMsg := ethereum.CallMsg{
@@ -61,10 +63,15 @@ func (c *Client) CallContractViewFunction(ctx context.Context, abi abi.ABI, cont
 
 	res, err := c.eth.CallContract(ctx, callMsg, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "client call contract error")
+		return errors.Wrap(err, "client call contract error")
 	}
 
-	return res, nil
+	err = abi.UnpackIntoInterface(result, function, res)
+	if err != nil {
+		return errors.Wrap(err, "unpack result error")
+	}
+
+	return nil
 }
 
 func (c *Client) Close() {
