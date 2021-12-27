@@ -3,371 +3,10 @@ package contract
 import (
 	"context"
 	"github.com/adene-develop/adene-goeth/eth"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"math/big"
-	"strings"
 )
-
-const ERC721ABIString = `[
-    {
-      "inputs": [
-        {
-          "internalType": "string",
-          "name": "name_",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "symbol_",
-          "type": "string"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "approved",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "Approval",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "operator",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "bool",
-          "name": "approved",
-          "type": "bool"
-        }
-      ],
-      "name": "ApprovalForAll",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "Transfer",
-      "type": "event"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "approve",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        }
-      ],
-      "name": "balanceOf",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "getApproved",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "operator",
-          "type": "address"
-        }
-      ],
-      "name": "isApprovedForAll",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "name",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "ownerOf",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "safeTransferFrom",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "bytes",
-          "name": "_data",
-          "type": "bytes"
-        }
-      ],
-      "name": "safeTransferFrom",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "operator",
-          "type": "address"
-        },
-        {
-          "internalType": "bool",
-          "name": "approved",
-          "type": "bool"
-        }
-      ],
-      "name": "setApprovalForAll",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes4",
-          "name": "interfaceId",
-          "type": "bytes4"
-        }
-      ],
-      "name": "supportsInterface",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "symbol",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "tokenURI",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "transferFrom",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    }
-  ]`
-
-var ERC721ABI abi.ABI
-
-func init() {
-	a, err := abi.JSON(strings.NewReader(ERC721ABIString))
-	if err != nil {
-		panic(err)
-	}
-	ERC721ABI = a
-}
 
 // ERC721 Standard view functions
 type ERC721 interface {
@@ -379,7 +18,7 @@ type ERC721 interface {
 	Symbol(ctx context.Context) (string, error)
 
 	// TokenURI returns the Uniform Resource Identifier (URI) for `tokenId` token.
-	TokenURI(ctx context.Context, tokenID string) (string, error)
+	TokenURI(ctx context.Context, tokenID int64) (string, error)
 
 	// BalanceOf returns the number of tokens in ``owner``'s account.
 	BalanceOf(ctx context.Context, owner common.Address) (balance int64, err error)
@@ -435,12 +74,12 @@ func (e *ERC721Contract) Symbol(ctx context.Context) (string, error) {
 	return result.Symbol, nil
 }
 
-func (e *ERC721Contract) TokenURI(ctx context.Context, tokenID string) (string, error) {
+func (e *ERC721Contract) TokenURI(ctx context.Context, tokenID int64) (string, error) {
 	var result struct {
 		TokenURI string
 	}
-	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "symbol"); err != nil {
-		return "", errors.Wrap(err, "ERC721Contract call view `symbol` error")
+	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "tokenURI", big.NewInt(tokenID)); err != nil {
+		return "", errors.Wrap(err, "ERC721Contract call view `tokenURI` error")
 	}
 	return result.TokenURI, nil
 }
@@ -450,7 +89,7 @@ func (e *ERC721Contract) BalanceOf(ctx context.Context, owner common.Address) (i
 		Balance *big.Int
 	}
 	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "balanceOf", owner); err != nil {
-		return 0, errors.Wrap(err, "ERC721Contract BalanceOf call view error")
+		return 0, errors.Wrap(err, "ERC721Contract call view `balanceOf` error")
 	}
 
 	return result.Balance.Int64(), nil
@@ -461,7 +100,7 @@ func (e *ERC721Contract) OwnerOf(ctx context.Context, tokenID int64) (common.Add
 		Owner common.Address
 	}
 	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "ownerOf", big.NewInt(tokenID)); err != nil {
-		return common.Address{}, errors.Wrap(err, "ERC721Contract OwnerOf call view error")
+		return common.Address{}, errors.Wrap(err, "ERC721Contract call view `ownerOf` error")
 	}
 	return result.Owner, nil
 }
@@ -471,7 +110,7 @@ func (e *ERC721Contract) GetApproved(ctx context.Context, tokenID int64) (common
 		Operator common.Address
 	}
 	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "getApproved", big.NewInt(tokenID)); err != nil {
-		return common.Address{}, errors.Wrap(err, "ERC721Contract GetApproved call view error")
+		return common.Address{}, errors.Wrap(err, "ERC721Contract call view `getApproved` error")
 	}
 	return result.Operator, nil
 }
@@ -481,7 +120,7 @@ func (e *ERC721Contract) IsApprovedForAll(ctx context.Context, owner common.Addr
 		IsApprovedForAll bool
 	}
 	if err := e.client.CallContractViewFunction(ctx, ERC721ABI, e.address, &result, "isApprovedForAll", owner, operator); err != nil {
-		return false, errors.Wrap(err, "ERC721Contract IsApprovedForAll call view error")
+		return false, errors.Wrap(err, "ERC721Contract call view `isApprovedForAll` error")
 	}
 	return result.IsApprovedForAll, nil
 }
@@ -498,5 +137,59 @@ type ERC721Events interface {
 }
 
 func ParseERC721Events(filterChanges []*eth.FilterChange, events ERC721Events) error {
+	for i := 0; i < len(filterChanges); i++ {
+		switch filterChanges[i].EventID() {
+		case ERC721ABI.Events["Transfer"].ID:
+			if err := parseERC721TransferEvent(filterChanges[i], events); err != nil {
+				return errors.Wrap(err, "ParseERC721Events parse transfer event")
+			}
+		case ERC721ABI.Events["Approval"].ID:
+			if err := parseERC721ApprovalEvent(filterChanges[i], events); err != nil {
+				return errors.Wrap(err, "ParseERC721Events parse approval event")
+			}
+
+		default:
+		}
+	}
+	return nil
+}
+
+func parseERC721TransferEvent(change *eth.FilterChange, events ERC721Events) error {
+	if change.Topics == nil || len(change.Topics) < 4 {
+		return errors.New("invalid topics")
+	}
+	from := common.BytesToAddress(change.Topics[1].Bytes())
+	to := common.BytesToAddress(change.Topics[2].Bytes())
+	tokenID := new(big.Int).SetBytes(change.Topics[3].Bytes()).Int64()
+	events.Transfer(from, to, tokenID)
+	return nil
+}
+
+func parseERC721ApprovalEvent(change *eth.FilterChange, events ERC721Events) error {
+	if change.Topics == nil || len(change.Topics) < 4 {
+		return errors.New("invalid topics")
+	}
+	from := common.BytesToAddress(change.Topics[1].Bytes())
+	to := common.BytesToAddress(change.Topics[2].Bytes())
+	tokenID := new(big.Int).SetBytes(change.Topics[3].Bytes()).Int64()
+	events.Approval(from, to, tokenID)
+	return nil
+}
+
+func parseERC721ApprovalForAllEvent(change *eth.FilterChange, events ERC721Events) error {
+	if change.Topics == nil || len(change.Topics) < 3 {
+		return errors.New("invalid topics")
+	}
+	from := common.BytesToAddress(change.Topics[1].Bytes())
+	to := common.BytesToAddress(change.Topics[2].Bytes())
+	var r struct {
+		Approved bool
+	}
+	err := ERC721ABI.UnpackIntoInterface(&r, "ApprovalForAll", change.Data)
+	if err != nil {
+		return err
+	}
+
+	events.ApprovalForAll(from, to, r.Approved)
 	return nil
 }

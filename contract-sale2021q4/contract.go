@@ -2,7 +2,6 @@ package sale2021q4
 
 import (
 	"context"
-	"fmt"
 	"github.com/adene-develop/adene-goeth/contract"
 	"github.com/adene-develop/adene-goeth/eth"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -29,7 +28,7 @@ const (
 
 type SALE2021Q4 interface {
 	contract.Contract
-	contract.Pauseable
+	contract.Pausable
 	contract.Ownable
 
 	// Info trả về thông tin của contract
@@ -52,7 +51,7 @@ func NewSale2021Q4Contract(client *eth.Client, address common.Address, abi abi.A
 }
 
 type sale2021q4 struct {
-	contract.Pauseable
+	contract.Pausable
 	contract.Ownable
 	address common.Address
 	client  *eth.Client
@@ -77,15 +76,15 @@ func (s *sale2021q4) InfoWallet(ctx context.Context, user common.Address) (commo
 	panic("implement me")
 }
 
-func (s *sale2021q4) BoxLevelOf(ctx context.Context, tokenID int64) (level BoxLevel, err error) {
-	res, err := s.client.CallContractViewFunction(ctx, s.abi, s.address, "boxLevelOf", big.NewInt(tokenID))
+func (s *sale2021q4) BoxLevelOf(ctx context.Context, tokenID int64) (BoxLevel, error) {
+	var result struct {
+		BoxLevel *big.Int
+	}
+
+	err := s.client.CallContractViewFunction(ctx, s.abi, s.address, &result, "boxLevelOf", big.NewInt(tokenID))
 	if err != nil {
 		return 0, errors.Wrap(err, "sale2021q4 BoxLevelOf call view error")
 	}
 
-	i, ok := new(big.Int).SetString(fmt.Sprintf("%x", res), 16)
-	if !ok {
-		return 0, errors.New("ERC721Contract BalanceOf parse result error")
-	}
-	return BoxLevel(i.Int64()), nil
+	return BoxLevel(result.BoxLevel.Int64()), nil
 }

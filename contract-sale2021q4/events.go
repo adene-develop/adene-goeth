@@ -11,7 +11,7 @@ import (
 const EventBoughtName = "Bought"
 
 type Events interface {
-	contract.PauseableEvents
+	contract.PausableEvents
 	contract.OwnableEvents
 
 	// Bought emitted when `user` buy `amount` of box with level `level`

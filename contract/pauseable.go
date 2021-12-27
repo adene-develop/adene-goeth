@@ -6,20 +6,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type Pauseable interface {
+type Pausable interface {
 	// Paused returns true if the contract is paused, and false otherwise.
 	Paused(ctx context.Context) (bool, error)
 }
 
-type PauseableEvents interface {
-	// Paused emitted when the pause is triggered by `account`.
-	Paused(account common.Address)
-
-	// Unpaused emitted when the pause is lifted by `account`.
-	Unpaused(account common.Address)
-}
-
-func NewPauseable(client *eth.Client, address common.Address) Pauseable {
+func NewPauseable(client *eth.Client, address common.Address) Pausable {
 	return &PauseableContract{
 		client:  client,
 		address: address,
@@ -36,6 +28,14 @@ func (p *PauseableContract) Paused(ctx context.Context) (bool, error) {
 	panic("implement me")
 }
 
-func ParsePauseableEvents(filterChanges []*eth.FilterChange, events PauseableEvents) error {
+type PausableEvents interface {
+	// Paused emitted when the pause is triggered by `account`.
+	Paused(account common.Address)
+
+	// Unpaused emitted when the pause is lifted by `account`.
+	Unpaused(account common.Address)
+}
+
+func ParsePauseableEvents(filterChanges []*eth.FilterChange, events PausableEvents) error {
 	return nil
 }

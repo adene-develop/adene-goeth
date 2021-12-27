@@ -2,319 +2,12 @@ package contract
 
 import (
 	"context"
-	"fmt"
 	"github.com/adene-develop/adene-goeth/eth"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"math"
 	"math/big"
-	"strings"
 )
-
-const ERC20ABIString = `[
-    {
-      "inputs": [
-        {
-          "internalType": "string",
-          "name": "name",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "symbol",
-          "type": "string"
-        },
-        {
-          "internalType": "uint256",
-          "name": "initialSupply",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "spender",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "value",
-          "type": "uint256"
-        }
-      ],
-      "name": "Approval",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "from",
-          "type": "address"
-        },
-        {
-          "indexed": true,
-          "internalType": "address",
-          "name": "to",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "value",
-          "type": "uint256"
-        }
-      ],
-      "name": "Transfer",
-      "type": "event"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "owner",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "spender",
-          "type": "address"
-        }
-      ],
-      "name": "allowance",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "spender",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "approve",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "account",
-          "type": "address"
-        }
-      ],
-      "name": "balanceOf",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "decimals",
-      "outputs": [
-        {
-          "internalType": "uint8",
-          "name": "",
-          "type": "uint8"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "spender",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "subtractedValue",
-          "type": "uint256"
-        }
-      ],
-      "name": "decreaseAllowance",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "spender",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "addedValue",
-          "type": "uint256"
-        }
-      ],
-      "name": "increaseAllowance",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "name",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "symbol",
-      "outputs": [
-        {
-          "internalType": "string",
-          "name": "",
-          "type": "string"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "totalSupply",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "recipient",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "transfer",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "sender",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "recipient",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "transferFrom",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    }
-  ]`
-
-var ERC20ABI abi.ABI
-
-func init() {
-	a, err := abi.JSON(strings.NewReader(ERC721ABIString))
-	if err != nil {
-		panic(err)
-	}
-	ERC721ABI = a
-}
 
 type ERC20 interface {
 	// Name returns the name of the token.
@@ -444,22 +137,22 @@ func (e *ERC20Contract) realNumberOfTokens(ctx context.Context, tokens *big.Int)
 type ERC20Events interface {
 	// Transfer emitted when `value` tokens are moved from one account (`from`) to
 	// another (`to`).
-	Transfer(from, to common.Address, value float64)
+	Transfer(from, to common.Address, value *big.Int)
 
 	// Approval emitted when the allowance of a `spender` for an `owner` is set by
 	// a call to {approve}. `value` is the new allowance.
-	Approval(owner, spender common.Address, value float64)
+	Approval(owner, spender common.Address, value *big.Int)
 }
 
 func ParseERC20Events(filterChanges []*eth.FilterChange, events ERC20Events) error {
 	for i := 0; i < len(filterChanges); i++ {
 		switch filterChanges[i].EventID() {
 		case ERC20ABI.Events["Transfer"].ID:
-			if err := parseTransferEvent(filterChanges[i], events); err != nil {
+			if err := parseERC20TransferEvent(filterChanges[i], events); err != nil {
 				return errors.Wrap(err, "ParseERC20Events")
 			}
 		case ERC20ABI.Events["Approval"].ID:
-			if err := parseApprovalEvent(filterChanges[i], events); err != nil {
+			if err := parseERC20ApprovalEvent(filterChanges[i], events); err != nil {
 				return errors.Wrap(err, "ParseERC20Events")
 			}
 		default:
@@ -468,26 +161,37 @@ func ParseERC20Events(filterChanges []*eth.FilterChange, events ERC20Events) err
 	return nil
 }
 
-func parseTransferEvent(change *eth.FilterChange, events ERC20Events) error {
+func parseERC20TransferEvent(change *eth.FilterChange, events ERC20Events) error {
+	if change.Topics == nil || len(change.Topics) < 3 {
+		return errors.New("invalid topics")
+	}
 	from := common.BytesToAddress(change.Topics[1].Bytes())
 	to := common.BytesToAddress(change.Topics[2].Bytes())
-	f, ok := new(big.Float).SetString(fmt.Sprintf("%x", change.Topics[3].Bytes()))
-	if !ok {
-		return errors.New("parse transfer event error")
+
+	var r struct {
+		Value *big.Int
 	}
-	value, _ := f.Float64()
-	events.Transfer(from, to, value)
+
+	if err := ERC20ABI.UnpackIntoInterface(&r, "Transfer", change.Data); err != nil {
+		return err
+	}
+	events.Transfer(from, to, r.Value)
 	return nil
 }
 
-func parseApprovalEvent(change *eth.FilterChange, events ERC20Events) error {
+func parseERC20ApprovalEvent(change *eth.FilterChange, events ERC20Events) error {
+	if change.Topics == nil || len(change.Topics) < 3 {
+		return errors.New("invalid topics")
+	}
 	from := common.BytesToAddress(change.Topics[1].Bytes())
 	to := common.BytesToAddress(change.Topics[2].Bytes())
-	f, ok := new(big.Float).SetString(fmt.Sprintf("%x", change.Topics[3].Bytes()))
-	if !ok {
-		return errors.New("parse approval event error")
+	var r struct {
+		Value *big.Int
 	}
-	value, _ := f.Float64()
-	events.Approval(from, to, value)
+
+	if err := ERC20ABI.UnpackIntoInterface(&r, "Approval", change.Data); err != nil {
+		return err
+	}
+	events.Approval(from, to, r.Value)
 	return nil
 }
