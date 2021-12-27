@@ -15,5 +15,13 @@ type Events interface {
 }
 
 func ParseEvents(filterChanges []*eth.FilterChange, events Events) error {
+	if err := contract.ParseERC20Events(filterChanges, events); err != nil {
+		return err
+	}
+	if err := contract.ParseOwnableEvents(filterChanges, events); err != nil {
+		return err
+	}
+
+	// TODO implement other events
 	return nil
 }

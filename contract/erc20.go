@@ -5,7 +5,6 @@ import (
 	"github.com/adene-develop/adene-goeth/eth"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	"math"
 	"math/big"
 )
 
@@ -20,15 +19,15 @@ type ERC20 interface {
 	Decimals(ctx context.Context) (uint8, error)
 
 	// TotalSupply returns total supply of this tokens
-	TotalSupply(ctx context.Context) (float64, error)
+	TotalSupply(ctx context.Context) (*big.Int, error)
 
 	// BalanceOf returns the amount of tokens owned by `account`.
-	BalanceOf(ctx context.Context, account common.Address) (float64, error)
+	BalanceOf(ctx context.Context, account common.Address) (*big.Int, error)
 
 	// Allowance returns the remaining number of tokens that `spender` will be
 	// allowed to spend on behalf of `owner` through {transferFrom}. This is
 	// zero by default.
-	Allowance(ctx context.Context, owner, spender common.Address) (float64, error)
+	Allowance(ctx context.Context, owner, spender common.Address) (*big.Int, error)
 }
 
 func NewERC20(client *eth.Client, address common.Address) ERC20 {
@@ -78,60 +77,36 @@ func (e *ERC20Contract) Decimals(ctx context.Context) (uint8, error) {
 	return result.Decimals, nil
 }
 
-func (e *ERC20Contract) TotalSupply(ctx context.Context) (float64, error) {
+func (e *ERC20Contract) TotalSupply(ctx context.Context) (*big.Int, error) {
 	var result struct {
 		TotalSupply *big.Int
 	}
 
 	if err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, &result, "totalSupply"); err != nil {
-		return 0, errors.Wrap(err, "ERC20Contract call view `totalSupply` error")
+		return nil, errors.Wrap(err, "ERC20Contract call view `totalSupply` error")
 	}
 
-	f, err := e.realNumberOfTokens(ctx, result.TotalSupply)
-	if err != nil {
-		return 0, errors.Wrap(err, "ERC20Contract TotalSupply get real total supply error")
-	}
-	return f, nil
+	return result.TotalSupply, nil
 }
 
-func (e *ERC20Contract) BalanceOf(ctx context.Context, account common.Address) (float64, error) {
+func (e *ERC20Contract) BalanceOf(ctx context.Context, account common.Address) (*big.Int, error) {
 	var result struct {
 		Balance *big.Int
 	}
 	if err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, &result, "balanceOf", account); err != nil {
-		return 0, errors.Wrap(err, "ERC20Contract call view `balanceOf` error")
+		return nil, errors.Wrap(err, "ERC20Contract call view `balanceOf` error")
 	}
-	f, err := e.realNumberOfTokens(ctx, result.Balance)
-	if err != nil {
-		return 0, errors.Wrap(err, "ERC20Contract BalanceOf get real total supply error")
-	}
-	return f, nil
+	return result.Balance, nil
 }
 
-func (e *ERC20Contract) Allowance(ctx context.Context, owner, spender common.Address) (float64, error) {
+func (e *ERC20Contract) Allowance(ctx context.Context, owner, spender common.Address) (*big.Int, error) {
 	var result struct {
 		Allowance *big.Int
 	}
 	if err := e.client.CallContractViewFunction(ctx, ERC20ABI, e.address, &result, "allowance", owner, spender); err != nil {
-		return 0, errors.Wrap(err, "ERC20Contract call view `allowance` error")
+		return nil, errors.Wrap(err, "ERC20Contract call view `allowance` error")
 	}
-	f, err := e.realNumberOfTokens(ctx, result.Allowance)
-	if err != nil {
-		return 0, errors.Wrap(err, "ERC20Contract Allowance get real total supply error")
-	}
-	return f, nil
-}
-
-// return the real number of given tokens = total tokens / pow(10, decimals)
-func (e *ERC20Contract) realNumberOfTokens(ctx context.Context, tokens *big.Int) (float64, error) {
-	decimals, err := e.Decimals(ctx)
-	if err != nil {
-		return 0, err
-	}
-	x := new(big.Float).SetInt(tokens)
-	y := big.NewFloat(math.Pow10(int(decimals)))
-	f, _ := new(big.Float).Quo(x, y).Float64()
-	return f, nil
+	return result.Allowance, nil
 }
 
 type ERC20Events interface {
